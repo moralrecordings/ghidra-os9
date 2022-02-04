@@ -9,6 +9,7 @@ import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.ArrayDataType;
 import ghidra.util.exception.DuplicateNameException;
 
 public class OS9Header implements StructConverter {
@@ -374,7 +375,7 @@ public class OS9Header implements StructConverter {
 		struct.add(DWORD, 4, "usage", null);
 		struct.add(DWORD, 4, "symbol", null);
 		
-		struct.add(VOID, 14, null, null);
+		struct.add(new ArrayDataType(BYTE, 14, 1), null, null);
 		struct.add(WORD, 2, "parity", null);
 
 		if (exec != null) {
