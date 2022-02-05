@@ -59,7 +59,7 @@ public class OS9Loader extends AbstractLibrarySupportLoader {
 
 	public static final String IDATA_OPTION = "Initialize data area using IData";
 	
-	public static final String ASSUME_A6_OPTION = "Add ASSUME for register A6 to point to data area across all of memory";
+	public static final String ASSUME_REGISTERS_OPTION = "Add ASSUME for registers A1, A3, A5 and A6.";
 
 	/**
 	 * Default virtual address offset to load the data area at 
@@ -69,7 +69,7 @@ public class OS9Loader extends AbstractLibrarySupportLoader {
 	/**
 	 * Amount of space to leave for module parameters when computing a default virtual address offset for the module data
 	 */
-	public static long DEFAULT_PARAMS_LENGTH = 0x100;
+	public static long DEFAULT_PARAMS_LENGTH = 0x1000;
 	
 	/**
 	 * Multiple to align the default module data start offset to, to make mental arithmetic easier.
@@ -138,8 +138,8 @@ public class OS9Loader extends AbstractLibrarySupportLoader {
 						builder.setUseIRefs((boolean) option.getValue());
 						break;
 						
-					case ASSUME_A6_OPTION:
-						builder.setAssumeA6((boolean) option.getValue());
+					case ASSUME_REGISTERS_OPTION:
+						builder.setAssumeRegisters((boolean) option.getValue());
 						break;
 						
 					case MODULE_OFFSET_OPTION:
@@ -180,7 +180,7 @@ public class OS9Loader extends AbstractLibrarySupportLoader {
 				options.add(new Option(IDATA_OPTION, true));
 				
 				// this isn't the most untuitive check, but if we have idata, it makes sense to have memory references
-				options.add(new Option(ASSUME_A6_OPTION, true));
+				options.add(new Option(ASSUME_REGISTERS_OPTION, true));
 			}
 			
 			if (header.irefs != null) {
@@ -220,7 +220,7 @@ public class OS9Loader extends AbstractLibrarySupportLoader {
 					name.equals(ENTRYPOINTS_OPTION)
 					|| name.equals(IDATA_OPTION)
 					|| name.equals(IREFS_OPTION)
-					|| name.equals(ASSUME_A6_OPTION)
+					|| name.equals(ASSUME_REGISTERS_OPTION)
 				) {
 					if (! Boolean.class.isAssignableFrom(option.getValueClass())) {
 						return "Invalid type for option: " + name + " - " + option.getValueClass();

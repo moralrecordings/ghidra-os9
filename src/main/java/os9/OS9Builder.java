@@ -49,7 +49,7 @@ public class OS9Builder {
 	protected boolean registerEntryPoints = true;
 	protected boolean useIData = true;
 	protected boolean useIRefs = true;
-	protected boolean assumeA6 = true;
+	protected boolean assumeRegisters = true;
 	
 	protected AddressSet loadedData;
 	
@@ -79,8 +79,8 @@ public class OS9Builder {
 		useIRefs = value;
 	}
 	
-	public void setAssumeA6(boolean value) {
-		assumeA6 = value;
+	public void setAssumeRegisters(boolean value) {
+		assumeRegisters = value;
 	}
 	
 	public void load(OS9Header header, ByteProvider provider, long moduleOffset, Long dataOffset)
@@ -102,11 +102,21 @@ public class OS9Builder {
 			
 			loadIRefs(header, provider, moduleAddress, dataAddress);
 			
-			if (assumeA6) {
-				Long A6Offset = 0x8000L;
-				var A6Value = dataAddress.getOffsetAsBigInteger().add(new BigInteger(A6Offset.toString()));
-				program.getProgramContext().setValue(program.getRegister("A6"), loadedData.getMinAddress(), loadedData.getMaxAddress(), A6Value);
-				Msg.debug(this, "Assuming " + program.getRegister("A6").toString() + " = " + A6Value.toString(16));
+			if (assumeRegisters) {
+				// set the registers as defined in the "Process Creation" section of the "OS-9 for 68K Processors Technical Manual"
+				var A1Address = symbolTable.getSymbols("data_top").next().getAddress().getOffsetAsBigInteger();
+				var A3Address = symbolTable.getSymbols("module_start").next().getAddress().getOffsetAsBigInteger();
+				var A5Address = symbolTable.getSymbols("stack_top").next().getAddress().getOffsetAsBigInteger();
+				var A6Address = symbolTable.getSymbols("data_start").next().getAddress().getOffsetAsBigInteger();
+
+				program.getProgramContext().setValue(program.getRegister("A1"), loadedData.getMinAddress(), loadedData.getMaxAddress(), A1Address);
+				Msg.debug(this, "Assuming " + program.getRegister("A1").toString() + " = " + A1Address.toString(16));
+				program.getProgramContext().setValue(program.getRegister("A3"), loadedData.getMinAddress(), loadedData.getMaxAddress(), A3Address);
+				Msg.debug(this, "Assuming " + program.getRegister("A3").toString() + " = " + A3Address.toString(16));
+				program.getProgramContext().setValue(program.getRegister("A5"), loadedData.getMinAddress(), loadedData.getMaxAddress(), A5Address);
+				Msg.debug(this, "Assuming " + program.getRegister("A5").toString() + " = " + A5Address.toString(16));
+				program.getProgramContext().setValue(program.getRegister("A6"), loadedData.getMinAddress(), loadedData.getMaxAddress(), A6Address);
+				Msg.debug(this, "Assuming " + program.getRegister("A6").toString() + " = " + A6Address.toString(16));
 			}
 		}
 		
@@ -158,7 +168,7 @@ public class OS9Builder {
 		
 		// create params area
 		var params_length = OS9Loader.DEFAULT_PARAMS_LENGTH;
-		MemoryBlock paramsBlock = memory.createUninitializedBlock("params", stack_top, params_length, false);
+		MemoryBlock paramsBlock = memory.createUninitializedBlock("params", stack_top, params_length + 1, false);
 		Address data_top = stack_top.add(params_length);
 		symbolTable.createLabel(data_top, "data_top", SourceType.IMPORTED);
 		loadedData.add(stack_top, data_top);
@@ -253,7 +263,7 @@ public class OS9Builder {
 				symbolTable.addExternalEntryPoint(address);
 				listing.createFunction(name, address, new AddressSet(address), SourceType.IMPORTED);
 			}			
-		} catch (InvalidInputException | OverlappingFunctionException e) {
+		} catch (InvalidInputException | OverlappingFunctionException | IllegalArgumentException e) {
 			log.appendException(e);
 		}
 	}
