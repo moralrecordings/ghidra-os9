@@ -156,8 +156,8 @@ public class OS9Loader extends AbstractLibrarySupportLoader {
 			builder.load(header, provider, moduleOffset, dataOffset);
 			
 		} catch (OS9Exception | UsrException e) {
-			throw new IOException(e.getMessage());
-		}
+			throw new IOException(e);
+	 	}	
 	}
 
 	@Override

@@ -96,11 +96,12 @@ public class OS9Builder {
 
 			loadDataArea(header, dataAddress);
 		
+			Address paramsAddress = symbolTable.getSymbols("stack_top").next().getAddress();
 			if (header.idata != null) {
-				loadIData(header, provider, moduleAddress, dataAddress);
+				loadIData(header, provider, moduleAddress, paramsAddress);
 			}
 			
-			loadIRefs(header, provider, moduleAddress, dataAddress);
+			loadIRefs(header, provider, moduleAddress, paramsAddress);
 			
 			if (assumeRegisters) {
 				// set the registers as defined in the "Process Creation" section of the "OS-9 for 68K Processors Technical Manual"
@@ -152,10 +153,11 @@ public class OS9Builder {
 	{
 		log.appendMsg("Loading data area at " + address);
 		
+
 		// create variable area
-		MemoryBlock dataBlock = memory.createInitializedBlock("data", address, header.mem, (byte) 0x00, monitor, false);
-		dataBlock.setPermissions(true, true, true);
-		Address var_top = address.add(header.mem);
+		var vars_length = OS9Loader.DEFAULT_PARAMS_LENGTH;
+		MemoryBlock varsBlock = memory.createUninitializedBlock("vars", address, vars_length, false);
+		Address var_top = address.add(vars_length);
 		symbolTable.createLabel(address, "data_start", SourceType.IMPORTED);
 		loadedData.add(address, var_top);
 		
@@ -167,9 +169,9 @@ public class OS9Builder {
 		loadedData.add(var_top, stack_top);
 		
 		// create params area
-		var params_length = OS9Loader.DEFAULT_PARAMS_LENGTH;
-		MemoryBlock paramsBlock = memory.createUninitializedBlock("params", stack_top, params_length + 1, false);
-		Address data_top = stack_top.add(params_length);
+		MemoryBlock dataBlock = memory.createInitializedBlock("data", stack_top, header.mem, (byte) 0x00, monitor, false);
+		dataBlock.setPermissions(true, true, true);
+		Address data_top = stack_top.add(header.mem);
 		symbolTable.createLabel(data_top, "data_top", SourceType.IMPORTED);
 		loadedData.add(stack_top, data_top);
 	}
