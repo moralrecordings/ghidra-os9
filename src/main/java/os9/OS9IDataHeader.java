@@ -16,6 +16,8 @@ import ghidra.util.exception.DuplicateNameException;
 public class OS9IDataHeader implements StructConverter {
 	public long offset;
 	public long length;
+	public long padded_length;
+	public long unk1;
 
 	public static OS9IDataHeader fromProvider(ByteProvider provider, long idata) throws IOException {
 		var reader = new BinaryReader(provider, false);
@@ -26,6 +28,8 @@ public class OS9IDataHeader implements StructConverter {
 	public OS9IDataHeader(BinaryReader reader) throws IOException {
 		offset = reader.readNextUnsignedInt();
 		length = reader.readNextUnsignedInt();
+		padded_length = reader.readNextUnsignedInt();
+		unk1 = reader.readNextUnsignedInt();
 	}
 
 	@Override
@@ -33,6 +37,8 @@ public class OS9IDataHeader implements StructConverter {
 		var struct = new StructureDataType("os9_idata", 0);
 		struct.add(DWORD, 4, "offset", null);
 		struct.add(DWORD, 4, "length", null);
+		struct.add(DWORD, 4, "padded_length", null);
+		struct.add(DWORD, 4, "unk1", null);
 		return struct;
 	}
 }

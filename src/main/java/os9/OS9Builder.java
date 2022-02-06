@@ -185,8 +185,10 @@ public class OS9Builder {
 		
 		if (useIData) {
 			// TODO: this seems ugly
-			byte[] idataBytes = provider.readBytes(header.idata + 8, idata.length);
-			memory.setBytes(dataAddress.add(idata.offset), idataBytes);
+			byte[] idataBytes = provider.readBytes(header.idata + 16, idata.length - 8);
+			Address iDataAddress = dataAddress.add(idata.offset + idata.padded_length - idata.length);
+			symbolTable.createLabel(iDataAddress, "idata_start", SourceType.IMPORTED);
+			memory.setBytes(iDataAddress.add(8), idataBytes);
 			referenceManager.addMemoryReference(moduleAddress.add(header.idata), dataAddress.add(idata.offset), RefType.WRITE, SourceType.IMPORTED, 0);
 		}
 	}
@@ -201,7 +203,8 @@ public class OS9Builder {
 		// tag irefs with struct / refs
 		symbolTable.createLabel(moduleAddress.add(header.irefs), "irefs", SourceType.IMPORTED);
 		DataUtilities.createData(program, moduleAddress.add(header.irefs), irefs.toDataType(), -1, false, ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-		
+		Address iDataAddress = symbolTable.getSymbols("idata_start").next().getAddress();
+
 		// handle relocations
 		long iref_entry_offset = header.irefs; // offset of the actual iref entry within irefs
 		
@@ -213,7 +216,7 @@ public class OS9Builder {
 				
 				// do relocation
 				Address entryAddr = moduleAddress.add(iref_entry_offset);						// address of the iref entry
-				Address relocAddr = dataAddress.add(offset);									// address of the pointer to be modified
+				Address relocAddr = iDataAddress.add(offset);									// address of the pointer to be modified
 				Address pointerAddr = moduleAddress.add(memory.getInt(relocAddr));	// address of the target of the pointer
 				long[] values = new long[] { };
 				byte[] bytes = new byte[4];
